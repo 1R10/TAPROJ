@@ -24,17 +24,15 @@ jobs:
           MESSAGE: ${{ github.event.head_commit.message }}
           COMMIT_TIME: ${{ github.event.head_commit.timestamp }}
         run: |
-          python3 -c '
+          python3 - << 'EOF'
           import os, re, json, subprocess, urllib.request
           from datetime import datetime
 
           branch = os.environ["BRANCH_NAME"]
           
-          # Extrai o primeiro número do nome da branch como estimativa (ex: "3-dias/login" -> 3)
           match = re.search(r"(\d+)", branch)
           estimativa = int(match.group(1)) if match else 1
 
-          # Pega a data do primeiro commit exclusivo dessa branch em relação à main
           try:
               cmd = ["git", "log", "origin/main..HEAD", "--reverse", "--format=%cI"]
               commits = subprocess.check_output(cmd).decode("utf-8").strip().splitlines()
@@ -46,8 +44,8 @@ jobs:
           atual = datetime.fromisoformat(os.environ["COMMIT_TIME"])
           dias_decorridos = round((atual - inicio).total_seconds() / 86400, 2)
 
-          # Formata a tarefa mostrando a branch e a mensagem do commit
-          tarefa_completa = f"[{branch}] {os.environ[\"MESSAGE\"].splitlines()[0]}"
+          primeira_linha_msg = os.environ["MESSAGE"].splitlines()[0]
+          tarefa_completa = f"[{branch}] {primeira_linha_msg}"
 
           payload = json.dumps({
               "projeto": os.environ["REPO_NAME"],
@@ -63,4 +61,4 @@ jobs:
               headers={"Content-Type": "application/json"}
           )
           urllib.request.urlopen(req)
-          '
+          EOF
